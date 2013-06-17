@@ -1,0 +1,135 @@
+<html><head>
+
+<style type="text/css">
+h2 {
+	float: left;
+}
+.win {
+	color: green;
+}
+
+.loss {
+	color: red;
+}
+
+</style>
+
+<script>
+
+// http://stackoverflow.com/questions/109023/best-algorithm-to-count-the-number-of-set-bits-in-a-32-bit-integer
+//
+var hammingWeight = function(i) {
+    i = i - ((i >> 1) & 0x55555555);
+    i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+    return ((i + (i >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+}
+
+var unpackInt = function(num) {
+	var map = [];
+	do {
+		map.push(num & 1 ? true : undefined);
+	} while (num >>= 1);
+	return map;
+}
+
+//	Get a map of days on which a team plays.
+//
+var expandTeamMasks = function(data) {
+	var out = new Array(12);
+	data.forEach(function(candidate, idx) {
+		if(!candidate) {
+			return;
+		}
+		out[idx] = unpackInt(candidate);
+	});
+	return out;
+}
+
+
+// team data for a season, unique id for each team.
+//
+var teamdata = {
+	"108":[null,null,null,1073741824,939515831,2147481599,532643581,2147337215,2128609150,268418943],
+	"109":[null,null,null,null,1073602495,2143289085,536346591,2130691071,2147467255,266321918],
+	"110":[null,null,null,null,1056963567,2143289087,1002434301,2129650687,2147352574,268418943],
+	"111":[null,null,null,null,1056956407,2147481599,1002434525,2146419711,1879030783,266336255]
+}
+
+var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+//	Flag day 1 in first month, day 2 in second, day 1,3,5 on third, day 4 on fourth...
+//
+var testdata = {
+	1: [1,2,21,8,16,32,64,128,256,512,1024,2048]
+}
+
+console.log("Test Data");
+
+var res = expandTeamMasks(testdata[1]);
+
+console.log(res);
+//	month 3, day 1, day 2, day 3
+//
+console.log(res[2][0]);
+console.log(res[2][1]);
+console.log(res[2][2]);
+
+console.log("******");
+
+var team110 = expandTeamMasks(teamdata[110]);
+
+console.log("Season data for 110 (month : daysPlayed)");
+console.log(team110);
+
+// Manufacture a season.
+//
+var gameResults110 = [];
+team110.forEach(function(month, midx) {
+	gameResults110[midx] = 0;
+	month.forEach(function(played, didx) {
+		if(played) {
+			Math.round(Math.random()) && (gameResults110[midx] |= Math.pow(2, didx)); 
+		}
+	})
+});
+
+console.log("Manufactured Season, bitmasks");
+console.log(gameResults110);
+
+console.log("Days Played by 110 in month 7");
+console.log(team110[7]);
+
+console.log("W/L for 110 in month 7");
+var upGR7 = unpackInt(gameResults110[7]);
+console.log(upGR7);
+console.log("Total number of `true`(wins) in month 7");
+var totalWins7 = upGR7.filter(function(x) { return x === true }).length;
+console.log(totalWins7);
+console.log("hammingWeight() should match # above: " + hammingWeight(gameResults110[7]));
+
+//	Visualize by mapping games played and 
+//
+var viz = "";
+months.forEach(function(mname,midx) {
+	var spark = "";
+	
+	if(!team110[midx]) {
+		return;
+	}
+
+	team110[midx].forEach(function(t,idx) {
+		//	gameResults110[midx] = mask of wins for team in #midx month 
+		//	& single bit mask flipping day index
+		//
+		//	? win(╹) : loss(╻) : nogame(▰)
+		//
+		spark += t ? (gameResults110[midx] & Math.pow(2, idx)) ? '<span class="win">&#9593;</span>' : '<span class="loss">&#9595;</span>' : "&#9648;";
+	});
+
+	viz += '<h2>' + months[midx] + '&nbsp;<h2 class="win">' + hammingWeight(gameResults110[midx]) + '</h2><h2>/</h2><h2 class="loss">' + hammingWeight(teamdata[110][midx]) + '</h2>';
+	viz += '<h2 style="margin-left:20px;">' + spark + '</h2><br clear="all">';	
+});
+
+document.writeln(viz);
+
+</script></head><body></body></html>
